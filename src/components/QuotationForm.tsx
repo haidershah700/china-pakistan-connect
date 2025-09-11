@@ -13,6 +13,8 @@ const QuotationForm = () => {
   const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID as string | undefined;
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string | undefined;
   const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string | undefined;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
   const [formData, setFormData] = useState({
     name: "",
     email: "", 
@@ -21,9 +23,75 @@ const QuotationForm = () => {
     quantity: "",
     notes: ""
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const maxFiles = 5;
+    const maxSizeBytes = 5 * 1024 * 1024; // 5MB per image
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]; 
+
+    const validFiles = files
+      .filter(f => allowedTypes.includes(f.type))
+      .filter(f => f.size <= maxSizeBytes)
+      .slice(0, maxFiles);
+
+    if (files.length !== validFiles.length) {
+      toast({
+        title: "Some files were skipped",
+        description: "Only images up to 5MB (JPG, PNG, WEBP, GIF) are allowed. Max 5 files.",
+        variant: "destructive",
+      });
+    }
+
+    setSelectedFiles(validFiles);
+    setPreviewUrls(validFiles.map(f => URL.createObjectURL(f)));
+  };
+
+  const uploadImagesAndGetUrls = async (): Promise<string[]> => {
+    if (!selectedFiles.length) return [];
+    if (!cloudName || !uploadPreset) {
+      toast({
+        title: "Image upload not configured",
+        description: "Images will not be uploaded because Cloudinary env vars are missing.",
+      });
+      return [];
+    }
+
+    try {
+      setIsUploading(true);
+      const uploadEndpoint = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+      const urlPromises = selectedFiles.map(async (file) => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("upload_preset", uploadPreset);
+        const resp = await fetch(uploadEndpoint, { method: "POST", body: form });
+        if (!resp.ok) throw new Error("Upload failed");
+        const json = await resp.json();
+        return json.secure_url as string;
+      });
+      const urls = await Promise.all(urlPromises);
+      return urls;
+    } catch (err) {
+      console.error("Image upload error:", err);
+      toast({
+        title: "Failed to upload images",
+        description: "You can still submit the form or send images via WhatsApp.",
+        variant: "destructive",
+      });
+      return [];
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Upload images first (if any)
+    const imageUrls = await uploadImagesAndGetUrls();
 
     // Create WhatsApp message with form data
     const message = `Hello! I would like a quotation for:
@@ -34,6 +102,7 @@ WhatsApp: ${formData.whatsapp}
 Product: ${formData.productDescription}
 Quantity: ${formData.quantity}
 Additional Notes: ${formData.notes}
+${imageUrls.length ? `\nImages:\n${imageUrls.join("\n")}` : ""}
 
 Please provide me with a detailed quotation including shipping to Pakistan.`;
 
@@ -53,6 +122,7 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
           productDescription: formData.productDescription,
           quantity: formData.quantity,
           notes: formData.notes,
+          imageUrls,
         }),
       });
       const json = await resp.json();
@@ -74,6 +144,7 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
       quantity_needed: formData.quantity,
       additional_notes: formData.notes,
       attachment_url: attachmentUrl,
+      image_urls: imageUrls.join("\n"),
     } as Record<string, unknown>;
 
     if (serviceId && templateId && publicKey) {
@@ -101,7 +172,9 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
 
     toast({
       title: "Quotation Request Sent!",
-      description: "We'll respond within 2 hours with your detailed quotation.",
+      description: imageUrls.length
+        ? "We received your request and images. We'll respond within 2 hours."
+        : "We'll respond within 2 hours with your detailed quotation.",
     });
   };
 
@@ -227,13 +300,27 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
                 </div>
 
                 <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-3">
                     <Upload className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Have product images?</span>
+                    <span className="font-medium text-foreground">Upload product images (optional)</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Send us product images via WhatsApp after submitting this form for more accurate quotations.
-                  </p>
+                  <input
+                    id="images"
+                    name="images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFilesSelected}
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border file:border-border file:text-sm file:font-semibold file:bg-background file:text-foreground hover:file:bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">JPG, PNG, WEBP, GIF up to 5MB each. Max 5 files.</p>
+                  {previewUrls.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {previewUrls.map((src, idx) => (
+                        <img key={idx} src={src} alt={`preview-${idx}`} className="h-20 w-full object-cover rounded-md border border-border/50" />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Button 
@@ -241,9 +328,10 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
                   variant="hero" 
                   size="lg" 
                   className="w-full text-lg py-6 h-auto"
+                  disabled={isUploading}
                 >
                   <Send className="w-5 h-5 mr-2" />
-                  Send Quotation Request
+                  {isUploading ? "Uploading images..." : "Send Quotation Request"}
                 </Button>
 
                 <div className="text-center text-sm text-muted-foreground">

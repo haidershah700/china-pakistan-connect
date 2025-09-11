@@ -46,6 +46,10 @@ exports.handler = async function (event) {
     if (body.productDescription) lines.push(`Product: ${body.productDescription}`);
     if (body.quantity) lines.push(`Quantity: ${body.quantity}`);
     if (body.notes) lines.push(`Notes: ${body.notes}`);
+    if (Array.isArray(body.imageUrls) && body.imageUrls.length) {
+      lines.push('Images:');
+      lines.push(...body.imageUrls);
+    }
     const consolidatedMessage = lines.join('\n');
 
     const payload = {
