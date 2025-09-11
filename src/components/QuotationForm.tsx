@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import emailjs from "@emailjs/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +21,33 @@ const QuotationForm = () => {
     quantity: "",
     notes: ""
   });
+  const [files, setFiles] = useState<File[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let uploadedLinks: string[] = [];
+    if (files.length > 0) {
+      try {
+        const form = new FormData();
+        for (const file of files) {
+          form.append("files", file);
+        }
+        toast({ title: "Uploading images...", description: "Please wait while we upload your images.", });
+        const res = await fetch("/.netlify/functions/upload-to-drive", {
+          method: "POST",
+          body: form,
+        });
+        if (!res.ok) {
+          throw new Error(`Upload failed with status ${res.status}`);
+        }
+        const data = await res.json();
+        uploadedLinks = (data?.files || []).map((f: any) => f.webViewLink || f.webContentLink).filter(Boolean);
+      } catch (err) {
+        console.error("Image upload error", err);
+        toast({ title: "Image upload failed", description: "We'll still submit your request without images.", variant: "destructive" });
+      }
+    }
 
     // Create WhatsApp message with form data
     const message = `Hello! I would like a quotation for:
@@ -48,6 +72,7 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
       product_description: formData.productDescription,
       quantity_needed: formData.quantity,
       additional_notes: formData.notes,
+      image_links: uploadedLinks.length ? uploadedLinks.join("\n") : "No images uploaded",
     };
 
     if (serviceId && templateId && publicKey) {
@@ -82,6 +107,11 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    setFiles(selected);
   };
 
   return (
@@ -201,11 +231,18 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
                 <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
                   <div className="flex items-center gap-3 mb-2">
                     <Upload className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Have product images?</span>
+                    <span className="font-medium text-foreground">Upload product images (optional)</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Send us product images via WhatsApp after submitting this form for more accurate quotations.
-                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileChange}
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  />
+                  {files.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">{files.length} image(s) selected</p>
+                  )}
                 </div>
 
                 <Button 
