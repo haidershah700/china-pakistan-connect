@@ -22,7 +22,7 @@ const QuotationForm = () => {
     notes: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Create WhatsApp message with form data
@@ -40,7 +40,32 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
     const whatsappUrl = `https://wa.me/+923001234567?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
 
-    // Send the same data via EmailJS in the background
+    // Create Drive PDF via Netlify function (calls Google Apps Script)
+    let attachmentUrl: string | undefined;
+    try {
+      const resp = await fetch("/.netlify/functions/create-attachment-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          whatsapp: formData.whatsapp,
+          productDescription: formData.productDescription,
+          quantity: formData.quantity,
+          notes: formData.notes,
+        }),
+      });
+      const json = await resp.json();
+      if (json && json.success && json.downloadUrl) {
+        attachmentUrl = json.downloadUrl as string;
+      } else {
+        console.warn("Apps Script did not return downloadUrl", json);
+      }
+    } catch (err) {
+      console.error("Failed to create attachment via Apps Script:", err);
+    }
+
+    // Send the same data via EmailJS in the background, include attachment_url if available
     const templateParams = {
       full_name: formData.name,
       whatsapp_number: formData.whatsapp,
@@ -48,7 +73,8 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
       product_description: formData.productDescription,
       quantity_needed: formData.quantity,
       additional_notes: formData.notes,
-    };
+      attachment_url: attachmentUrl,
+    } as Record<string, unknown>;
 
     if (serviceId && templateId && publicKey) {
       emailjs
@@ -56,7 +82,9 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
         .then(() => {
           toast({
             title: "Email received as well!",
-            description: "We've also received your request via email.",
+            description: attachmentUrl
+              ? "We've also received your request with the attachment."
+              : "We've also received your request via email.",
           });
         })
         .catch((error) => {
