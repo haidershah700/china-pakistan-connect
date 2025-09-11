@@ -5,7 +5,7 @@ const Header = () => {
   const openWhatsApp = () => {
     // WhatsApp Business API integration - opens group chat with admin and team member
     const message = encodeURIComponent("Hello! I'm interested in your product sourcing service from China to Pakistan.");
-    window.open(`https://wa.me/+923001234567?text=${message}`, '_blank');
+    window.open(`https://wa.me/+923234922778?text=${message}`, '_blank');
   };
 
   return (
