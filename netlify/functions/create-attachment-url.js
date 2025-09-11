@@ -1,7 +1,7 @@
 // Netlify Function: create-attachment-url
-// - Reads form data from the request body
-// - Posts it to a Google Apps Script Web App (URL in env GAS_WEB_APP_URL)
-// - Returns the resulting JSON (including downloadUrl) back to the client
+// - Accepts a base64-encoded file (data, filename, mimeType) in the request body
+// - Proxies the payload to a Google Apps Script Web App (URL in env GAS_WEB_APP_URL)
+// - Returns the resulting JSON from Apps Script (e.g., { fileUrl, fileId }) back to the client
 
 /**
  * @param {import('@netlify/functions').HandlerEvent} event
@@ -38,29 +38,20 @@ exports.handler = async function (event) {
   try {
     const body = event.body ? JSON.parse(event.body) : {};
 
-    // Build a consolidated message expected by the Apps Script
-    const lines = [];
-    if (body.name) lines.push(`Name: ${body.name}`);
-    if (body.email) lines.push(`Email: ${body.email}`);
-    if (body.whatsapp) lines.push(`WhatsApp: ${body.whatsapp}`);
-    if (body.productDescription) lines.push(`Product: ${body.productDescription}`);
-    if (body.quantity) lines.push(`Quantity: ${body.quantity}`);
-    if (body.notes) lines.push(`Notes: ${body.notes}`);
-    if (Array.isArray(body.imageUrls) && body.imageUrls.length) {
-      lines.push('Images:');
-      lines.push(...body.imageUrls);
-    }
-    const consolidatedMessage = lines.join('\n');
+    // Expecting { data: base64String, filename: string, mimeType: string }
+    const data = body && (body.data || (body.file && body.file.data));
+    const filename = body && (body.filename || (body.file && body.file.filename) || 'upload');
+    const mimeType = body && (body.mimeType || (body.file && body.file.mimeType) || 'application/octet-stream');
 
-    const payload = {
-      name: body.name || 'Quotation Request',
-      email: body.email || 'no-email@local',
-      message: consolidatedMessage || 'Quotation request details attached.',
-      subject: 'New Quotation Request',
-      phone: body.whatsapp || '',
-      // Also pass all raw fields so the Apps Script can include them if desired
-      ...body,
-    };
+    if (!data) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ success: false, error: 'Missing file data. Provide { data, filename, mimeType }.' }),
+      };
+    }
+
+    const payload = { data, filename, mimeType };
 
     const resp = await fetch(appsScriptUrl, {
       method: 'POST',
@@ -77,10 +68,12 @@ exports.handler = async function (event) {
       };
     }
 
+    // Ensure success flag for clients
+    const bodyOut = { success: true, ...json };
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      body: JSON.stringify(json),
+      body: JSON.stringify(bodyOut),
     };
   } catch (error) {
     return {

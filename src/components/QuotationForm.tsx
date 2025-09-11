@@ -13,8 +13,6 @@ const QuotationForm = () => {
   const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID as string | undefined;
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string | undefined;
   const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string | undefined;
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
   const [formData, setFormData] = useState({
     name: "",
     email: "", 
@@ -30,7 +28,7 @@ const QuotationForm = () => {
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const maxFiles = 5;
-    const maxSizeBytes = 5 * 1024 * 1024; // 5MB per image
+    const maxSizeBytes = 4 * 1024 * 1024; // 4MB per image (Netlify function body limit safe)
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]; 
 
     const validFiles = files
@@ -41,7 +39,7 @@ const QuotationForm = () => {
     if (files.length !== validFiles.length) {
       toast({
         title: "Some files were skipped",
-        description: "Only images up to 5MB (JPG, PNG, WEBP, GIF) are allowed. Max 5 files.",
+        description: "Only images up to 4MB (JPG, PNG, WEBP, GIF) are allowed. Max 5 files.",
         variant: "destructive",
       });
     }
@@ -50,35 +48,48 @@ const QuotationForm = () => {
     setPreviewUrls(validFiles.map(f => URL.createObjectURL(f)));
   };
 
-  const uploadImagesAndGetUrls = async (): Promise<string[]> => {
-    if (!selectedFiles.length) return [];
-    if (!cloudName || !uploadPreset) {
-      toast({
-        title: "Image upload not configured",
-        description: "Images will not be uploaded because Cloudinary env vars are missing.",
-      });
-      return [];
-    }
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === "string" ? reader.result : "";
+        const commaIndex = result.indexOf(",");
+        resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+      };
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(file);
+    });
+  };
 
+  const uploadFilesToDriveAndGetUrls = async (): Promise<string[]> => {
+    if (!selectedFiles.length) return [];
     try {
       setIsUploading(true);
-      const uploadEndpoint = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
-      const urlPromises = selectedFiles.map(async (file) => {
-        const form = new FormData();
-        form.append("file", file);
-        form.append("upload_preset", uploadPreset);
-        const resp = await fetch(uploadEndpoint, { method: "POST", body: form });
-        if (!resp.ok) throw new Error("Upload failed");
-        const json = await resp.json();
-        return json.secure_url as string;
-      });
-      const urls = await Promise.all(urlPromises);
+      const urls: string[] = [];
+      for (const file of selectedFiles) {
+        const base64 = await fileToBase64(file);
+        const resp = await fetch("/.netlify/functions/create-attachment-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            data: base64,
+            filename: file.name,
+            mimeType: file.type || "application/octet-stream",
+          }),
+        });
+        const json = await resp.json().catch(() => null as any);
+        if (resp.ok && json && (json.fileUrl || json.downloadUrl)) {
+          urls.push((json.fileUrl || json.downloadUrl) as string);
+        } else {
+          console.warn("Drive upload failed for", file.name, json);
+        }
+      }
       return urls;
     } catch (err) {
-      console.error("Image upload error:", err);
+      console.error("Drive upload error:", err);
       toast({
         title: "Failed to upload images",
-        description: "You can still submit the form or send images via WhatsApp.",
+        description: "You can still submit the form or send details via WhatsApp.",
         variant: "destructive",
       });
       return [];
@@ -90,8 +101,8 @@ const QuotationForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Upload images first (if any)
-    const imageUrls = await uploadImagesAndGetUrls();
+    // Upload selected files to Google Drive via Netlify + Apps Script
+    const driveUrls = await uploadFilesToDriveAndGetUrls();
 
     // Create WhatsApp message with form data
     const message = `Hello! I would like a quotation for:
@@ -102,38 +113,15 @@ WhatsApp: ${formData.whatsapp}
 Product: ${formData.productDescription}
 Quantity: ${formData.quantity}
 Additional Notes: ${formData.notes}
-${imageUrls.length ? `\nImages:\n${imageUrls.join("\n")}` : ""}
+${driveUrls.length ? `\nImages (Drive):\n${driveUrls.join("\n")}` : ""}
 
 Please provide me with a detailed quotation including shipping to Pakistan.`;
 
     const whatsappUrl = `https://wa.me/+923001234567?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
 
-    // Create Drive PDF via Netlify function (calls Google Apps Script)
-    let attachmentUrl: string | undefined;
-    try {
-      const resp = await fetch("/.netlify/functions/create-attachment-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          whatsapp: formData.whatsapp,
-          productDescription: formData.productDescription,
-          quantity: formData.quantity,
-          notes: formData.notes,
-          imageUrls,
-        }),
-      });
-      const json = await resp.json();
-      if (json && json.success && json.downloadUrl) {
-        attachmentUrl = json.downloadUrl as string;
-      } else {
-        console.warn("Apps Script did not return downloadUrl", json);
-      }
-    } catch (err) {
-      console.error("Failed to create attachment via Apps Script:", err);
-    }
+    // Use the first uploaded Drive file as EmailJS attachment_URL
+    const attachmentUrl: string | undefined = driveUrls[0];
 
     // Send the same data via EmailJS in the background, include attachment_url if available
     const templateParams = {
@@ -143,8 +131,9 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
       product_description: formData.productDescription,
       quantity_needed: formData.quantity,
       additional_notes: formData.notes,
+      attachment_URL: attachmentUrl,
       attachment_url: attachmentUrl,
-      image_urls: imageUrls.join("\n"),
+      image_urls: driveUrls.join("\n"),
     } as Record<string, unknown>;
 
     if (serviceId && templateId && publicKey) {
@@ -172,7 +161,7 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
 
     toast({
       title: "Quotation Request Sent!",
-      description: imageUrls.length
+      description: driveUrls.length
         ? "We received your request and images. We'll respond within 2 hours."
         : "We'll respond within 2 hours with your detailed quotation.",
     });
@@ -313,7 +302,7 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
                     onChange={handleFilesSelected}
                     className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border file:border-border file:text-sm file:font-semibold file:bg-background file:text-foreground hover:file:bg-muted"
                   />
-                  <p className="text-xs text-muted-foreground mt-2">JPG, PNG, WEBP, GIF up to 5MB each. Max 5 files.</p>
+                  <p className="text-xs text-muted-foreground mt-2">JPG, PNG, WEBP, GIF up to 4MB each. Max 5 files.</p>
                   {previewUrls.length > 0 && (
                     <div className="mt-3 grid grid-cols-3 gap-2">
                       {previewUrls.map((src, idx) => (
