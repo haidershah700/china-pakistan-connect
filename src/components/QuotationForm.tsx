@@ -1,4 +1,5 @@
 import { useState } from "react";
+import emailjs from "@emailjs/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const QuotationForm = () => {
   const { toast } = useToast();
+  const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID as string | undefined;
+  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string | undefined;
+  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string | undefined;
   const [formData, setFormData] = useState({
     name: "",
     email: "", 
@@ -20,7 +24,7 @@ const QuotationForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Create WhatsApp message with form data
     const message = `Hello! I would like a quotation for:
 
@@ -35,7 +39,38 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
 
     const whatsappUrl = `https://wa.me/+923001234567?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-    
+
+    // Send the same data via EmailJS in the background
+    const templateParams = {
+      full_name: formData.name,
+      whatsapp_number: formData.whatsapp,
+      email_address: formData.email,
+      product_description: formData.productDescription,
+      quantity_needed: formData.quantity,
+      additional_notes: formData.notes,
+    };
+
+    if (serviceId && templateId && publicKey) {
+      emailjs
+        .send(serviceId, templateId, templateParams, { publicKey })
+        .then(() => {
+          toast({
+            title: "Email received as well!",
+            description: "We've also received your request via email.",
+          });
+        })
+        .catch((error) => {
+          console.error("EmailJS send error:", error);
+          toast({
+            title: "Email failed to send",
+            description: "We still received your WhatsApp message.",
+            variant: "destructive",
+          });
+        });
+    } else {
+      console.warn("Missing EmailJS env vars. Skipping email send.");
+    }
+
     toast({
       title: "Quotation Request Sent!",
       description: "We'll respond within 2 hours with your detailed quotation.",
