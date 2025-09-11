@@ -13,8 +13,6 @@ const QuotationForm = () => {
   const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID as string | undefined;
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string | undefined;
   const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string | undefined;
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
   const [formData, setFormData] = useState({
     name: "",
     email: "", 
@@ -52,28 +50,15 @@ const QuotationForm = () => {
 
   const uploadImagesAndGetUrls = async (): Promise<string[]> => {
     if (!selectedFiles.length) return [];
-    if (!cloudName || !uploadPreset) {
-      toast({
-        title: "Image upload not configured",
-        description: "Images will not be uploaded because Cloudinary env vars are missing.",
-      });
-      return [];
-    }
-
     try {
       setIsUploading(true);
-      const uploadEndpoint = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
-      const urlPromises = selectedFiles.map(async (file) => {
-        const form = new FormData();
-        form.append("file", file);
-        form.append("upload_preset", uploadPreset);
-        const resp = await fetch(uploadEndpoint, { method: "POST", body: form });
-        if (!resp.ok) throw new Error("Upload failed");
-        const json = await resp.json();
-        return json.secure_url as string;
-      });
-      const urls = await Promise.all(urlPromises);
-      return urls;
+      const form = new FormData();
+      selectedFiles.forEach((file) => form.append("files", file, file.name));
+      const resp = await fetch("/.netlify/functions/upload-to-drive", { method: "POST", body: form });
+      if (!resp.ok) throw new Error("Upload failed");
+      const json = await resp.json();
+      const links = Array.isArray(json.links) ? (json.links as string[]) : [];
+      return links;
     } catch (err) {
       console.error("Image upload error:", err);
       toast({
@@ -109,33 +94,9 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
     const whatsappUrl = `https://wa.me/+923001234567?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
 
-    // Create Drive PDF via Netlify function (calls Google Apps Script)
-    let attachmentUrl: string | undefined;
-    try {
-      const resp = await fetch("/.netlify/functions/create-attachment-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          whatsapp: formData.whatsapp,
-          productDescription: formData.productDescription,
-          quantity: formData.quantity,
-          notes: formData.notes,
-          imageUrls,
-        }),
-      });
-      const json = await resp.json();
-      if (json && json.success && json.downloadUrl) {
-        attachmentUrl = json.downloadUrl as string;
-      } else {
-        console.warn("Apps Script did not return downloadUrl", json);
-      }
-    } catch (err) {
-      console.error("Failed to create attachment via Apps Script:", err);
-    }
+    // Removed PDF creation step; images are uploaded directly to Google Drive above.
 
-    // Send the same data via EmailJS in the background, include attachment_url if available
+    // Send the same data via EmailJS in the background, include image Drive links
     const templateParams = {
       full_name: formData.name,
       whatsapp_number: formData.whatsapp,
@@ -143,7 +104,7 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
       product_description: formData.productDescription,
       quantity_needed: formData.quantity,
       additional_notes: formData.notes,
-      attachment_url: attachmentUrl,
+      attachment_url: imageUrls[0],
       image_urls: imageUrls.join("\n"),
     } as Record<string, unknown>;
 
@@ -153,8 +114,8 @@ Please provide me with a detailed quotation including shipping to Pakistan.`;
         .then(() => {
           toast({
             title: "Email received as well!",
-            description: attachmentUrl
-              ? "We've also received your request with the attachment."
+            description: imageUrls.length
+              ? "We've also received your request with your image links."
               : "We've also received your request via email.",
           });
         })
