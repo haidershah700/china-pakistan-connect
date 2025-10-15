@@ -5,7 +5,7 @@ import { MessageSquare, Phone, Mail, MapPin, Clock } from "lucide-react";
 const Contact = () => {
   const openWhatsApp = () => {
     const message = encodeURIComponent("Hello! I have questions about your sourcing service from China to Pakistan.");
-    window.open(`https://wa.me/+923001234567?text=${message}`, '_blank');
+    window.open(`https://wa.me/+8615650730016?text=${message}`, '_blank');
   };
 
   const contactMethods = [
@@ -13,7 +13,7 @@ const Contact = () => {
       icon: MessageSquare,
       title: "WhatsApp",
       subtitle: "Fastest Response", 
-      value: "+92 300 123 4567",
+      value: "+861 565 0730 016",
       action: openWhatsApp,
       available: "24/7 Available",
       color: "text-success"
@@ -22,12 +22,12 @@ const Contact = () => {
       icon: Phone,
       title: "Phone",
       subtitle: "Direct Call",
-      value: "+92 21 1234 5678", 
-      action: () => window.open("tel:+922112345678"),
+      value: "+861 565 0730 016", 
+      action: () => window.open("tel:+8615650730016"),
       available: "9 AM - 6 PM",
       color: "text-accent"
     },
-    {
+   /** {
       icon: Mail,
       title: "Email",
       subtitle: "Detailed Inquiries",
@@ -35,7 +35,7 @@ const Contact = () => {
       action: () => window.open("mailto:info@paksource.com"),
       available: "Response in 2 hours",
       color: "text-primary"
-    }
+    }**/
   ];
 
   return (
@@ -80,15 +80,15 @@ const Contact = () => {
                 <div>
                   <h4 className="font-semibold text-foreground">Pakistan Office</h4>
                   <p className="text-muted-foreground">
-                    Main Boulevard, Gulberg III<br />
+                    75 CCA1 Phase VI, DHA<br />
                     Lahore, Punjab, Pakistan
                   </p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-foreground">China Office</h4>
                   <p className="text-muted-foreground">
-                    Guangzhou Trading Center<br />
-                    Guangdong Province, China
+                    No. 83 West Third Ring Road North<br />
+                    Haidian District, Beijing, China
                   </p>
                 </div>
                 <div className="flex items-center gap-2 pt-4">
