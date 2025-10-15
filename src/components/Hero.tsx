@@ -5,7 +5,7 @@ import heroImage from "@/assets/hero-bg.jpg";
 const Hero = () => {
   const openWhatsApp = () => {
     const message = encodeURIComponent("Hello! I want to get a quotation for products from China to Pakistan.");
-    window.open(`https://wa.me/+923001234567?text=${message}`, '_blank');
+    window.open(`https://wa.me/+8615650730016?text=${message}`, '_blank');
   };
 
   const scrollToQuotation = () => {
