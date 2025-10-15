@@ -14,10 +14,10 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">PS</span>
+              <span className="text-primary-foreground font-bold text-lg">PCT</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">PakSource</h1>
+              <h1 className="text-xl font-bold text-foreground">Pak China Trade</h1>
               <p className="text-xs text-muted-foreground">China to Pakistan</p>
             </div>
           </div>
