@@ -14,10 +14,10 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">PS</span>
+                <span className="text-primary-foreground font-bold">PCT</span>
               </div>
               <div>
-                <h3 className="text-xl font-bold">PakSource</h3>
+                <h3 className="text-xl font-bold">Pak China Trade</h3>
                 <p className="text-sm text-primary-foreground/80">China to Pakistan</p>
               </div>
             </div>
@@ -91,12 +91,12 @@ const Footer = () => {
         <div className="border-t border-primary-foreground/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-primary-foreground/80 text-sm">
-              © 2025 PakSource. All rights reserved. Made in Pakistan 🇵🇰
+              © 2025 Pak China Trade. All rights reserved.
             </p>
-            /**<div className="flex gap-6 text-sm text-primary-foreground/80">
+            <!--<div className="flex gap-6 text-sm text-primary-foreground/80">
               <a href="#" className="hover:text-primary-foreground transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-primary-foreground transition-colors">Terms of Service</a>
-            </div>**/
+            </div>-->
           </div>
         </div>
       </div>
