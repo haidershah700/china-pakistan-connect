@@ -27,15 +27,15 @@ const Contact = () => {
       available: "9 AM - 6 PM",
       color: "text-accent"
     },
-   /** {
+  {
       icon: Mail,
       title: "Email",
       subtitle: "Detailed Inquiries",
-      value: "info@paksource.com",
-      action: () => window.open("mailto:info@paksource.com"),
+      value: "Pakchinatrade007@gmail.com",
+      action: () => window.open("mailto:Pakchinatrade007@gmail.com"),
       available: "Response in 2 hours",
       color: "text-primary"
-    }**/
+    }
   ];
 
   return (
