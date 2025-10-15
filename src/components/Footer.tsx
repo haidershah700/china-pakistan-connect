@@ -93,10 +93,12 @@ const Footer = () => {
             <p className="text-primary-foreground/80 text-sm">
               © 2025 Pak China Trade. All rights reserved.
             </p>
-            <!-- <div className="flex gap-6 text-sm text-primary-foreground/80"> -->
-              <!-- <a href="#" className="hover:text-primary-foreground transition-colors">Privacy Policy</a> -->
-             <!-- <a href="#" className="hover:text-primary-foreground transition-colors">Terms of Service</a> -->
-           <!-- </div> -->
+            <!-- 
+            <div className="flex gap-6 text-sm text-primary-foreground/80">
+                <a href="#" className="hover:text-primary-foreground transition-colors">Privacy Policy</a>
+                <a href="#" className="hover:text-primary-foreground transition-colors">Terms of Service</a>
+           </div> 
+           -->
           </div>
         </div>
       </div>
