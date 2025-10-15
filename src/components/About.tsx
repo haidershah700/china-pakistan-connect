@@ -4,13 +4,13 @@ const About = () => {
   const achievements = [
     {
       icon: Users,
-      number: "5000+",
+      number: "500+",
       label: "Happy Customers",
       description: "Served across Pakistan"
     },
     {
       icon: Award,
-      number: "50,000+",
+      number: "1000+",
       label: "Products Sourced",
       description: "From trusted Chinese suppliers"
     },
