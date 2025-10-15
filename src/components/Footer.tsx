@@ -67,13 +67,13 @@ const Footer = () => {
                 <Phone className="w-4 h-4" />
                 +861 565 0730 016
               </a>
-             /** <a 
-                href="mailto:info@paksource.com"
+              <a 
+                href="mailto:Pakchinatrade007@gmail.com"
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors"
               >
                 <Mail className="w-4 h-4" />
-                info@paksource.com
-              </a>**/
+                Pakchinatrade007@gmail.com
+              </a>
             </div>
           </div>
         </div>
