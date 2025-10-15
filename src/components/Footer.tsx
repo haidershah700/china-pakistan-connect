@@ -3,7 +3,7 @@ import { MessageSquare, Phone, Mail } from "lucide-react";
 const Footer = () => {
   const openWhatsApp = () => {
     const message = encodeURIComponent("Hello! I'm interested in your China sourcing services.");
-    window.open(`https://wa.me/+923001234567?text=${message}`, '_blank');
+    window.open(`https://wa.me/+8615650730016?text=${message}`, '_blank');
   };
 
   return (
@@ -58,22 +58,22 @@ const Footer = () => {
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors w-full text-left"
               >
                 <MessageSquare className="w-4 h-4" />
-                +92 300 123 4567
+                +861 565 0730 016
               </button>
               <a 
-                href="tel:+922112345678"
+                href="tel:+8615650730016"
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                +92 21 1234 5678
+                +861 565 0730 016
               </a>
-              <a 
+             /** <a 
                 href="mailto:info@paksource.com"
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors"
               >
                 <Mail className="w-4 h-4" />
                 info@paksource.com
-              </a>
+              </a>**/
             </div>
           </div>
         </div>
@@ -82,12 +82,12 @@ const Footer = () => {
         <div className="border-t border-primary-foreground/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-primary-foreground/80 text-sm">
-              © 2024 PakSource. All rights reserved. Made in Pakistan 🇵🇰
+              © 2025 PakSource. All rights reserved. Made in Pakistan 🇵🇰
             </p>
-            <div className="flex gap-6 text-sm text-primary-foreground/80">
+            /**<div className="flex gap-6 text-sm text-primary-foreground/80">
               <a href="#" className="hover:text-primary-foreground transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-primary-foreground transition-colors">Terms of Service</a>
-            </div>
+            </div>**/
           </div>
         </div>
       </div>
