@@ -91,7 +91,7 @@ const HowItWorks = () => {
           </h3>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             From small business owners to large retailers, we've helped Pakistani entrepreneurs 
-            source over 50,000+ products from China with 100% success rate and zero fraudulent transactions.
+            source over 1000+ products from China with 100% success rate and zero fraudulent transactions.
           </p>
         </div>
       </div>
