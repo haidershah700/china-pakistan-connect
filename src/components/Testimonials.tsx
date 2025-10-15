@@ -7,21 +7,21 @@ const Testimonials = () => {
       name: "Ahmed Hassan",
       business: "Electronics Shop Owner, Karachi",
       rating: 5,
-      text: "PakSource helped me import mobile accessories from China at 40% less cost than local suppliers. Their transparency and reliability is unmatched.",
+      text: "They helped me import mobile accessories from China at 40% less cost than local suppliers. Their transparency and reliability is unmatched.",
       urdu: "بہترین سروس، اعتماد کے ساتھ"
     },
     {
       name: "Fatima Khan", 
       business: "Online Fashion Retailer, Lahore",
       rating: 5,
-      text: "I was hesitant about importing from China, but PakSource made it so easy. They handled everything and my products arrived exactly as described.",
+      text: "I was hesitant about importing from China, but they made it so easy. They handled everything and my products arrived exactly as described.",
       urdu: "آسان اور محفوظ"
     },
     {
       name: "Muhammad Ali",
       business: "Wholesale Trader, Islamabad", 
       rating: 5,
-      text: "Working with PakSource for 2 years now. They've never disappointed me. Great prices, quality products, and excellent customer support.",
+      text: "Working with Pak China Trade for 2 years now. They've never disappointed me. Great prices, quality products, and excellent customer support.",
       urdu: "دو سال سے بہترین تجربہ"
     },
     {
