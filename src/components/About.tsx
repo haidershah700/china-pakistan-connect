@@ -34,7 +34,7 @@ const About = () => {
         <div className="text-center mb-16">
           <span className="text-lg font-semibold text-primary mb-2 block">ہمارے بارے میں</span>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            About PakSource
+            About Pak China Trade
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Your trusted Pakistani partner for China imports since 2019
@@ -54,7 +54,7 @@ const About = () => {
               </p>
               <p>
                 After successfully building our own import business, we realized many Pakistani 
-                business owners needed the same support. That's why we created PakSource - to be 
+                business owners needed the same support. That's why we created Pak China Trade - to be 
                 the bridge between Pakistan and China's vast manufacturing ecosystem.
               </p>
               <p>
